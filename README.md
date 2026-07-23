@@ -313,7 +313,8 @@ The following work used PSS:
     year = {2026},
     issn = {2643-6515},
     doi = {https://doi.org/10.1016/j.plaphe.2026.100228},
-    url = {https://www.sciencedirect.com/science/article/pii/S2643651526000658}
+    url = {https://www.sciencedirect.com/science/article/pii/S2643651526000658},
+    author = {Ruiming Du and Sinuo Li and Kenong Xu and Lailiang Cheng and Yu Jiang}
 }
 ```
 
