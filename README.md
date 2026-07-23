@@ -1,6 +1,8 @@
 # Plant Segmentation Studio
 
-[Python](https://www.python.org/downloads/) [PyTorch](https://pytorch.org/) [CUDA](https://developer.nvidia.com/cuda-11-7-0-download-archive)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-orange.svg)](https://pytorch.org/)
+[![CUDA](https://img.shields.io/badge/CUDA-11.7-green.svg)](https://developer.nvidia.com/cuda-11-7-0-download-archive)
 
 ## Overview
 
