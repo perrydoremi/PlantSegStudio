@@ -1,0 +1,62 @@
+{
+"HR3DAllThree": {
+  "feature": 3,
+  "label": {"stem": 0, "leaf": 1},
+  "instance":["leaf"]},
+"HR3DSorghum": {
+  "feature": 3,
+  "label": {"stem": 0, "leaf": 1},
+  "instance":["leaf"]},
+"HR3DTobacco": {
+  "feature": 3,
+  "label": {"stem": 0, "leaf": 1},
+  "instance":["leaf"]},
+"HR3DTomato": {
+  "feature": 3,
+  "label": {"stem": 0, "leaf": 1},
+  "instance":["leaf"]},
+"Pheno4DMaize": {
+  "feature": 3,
+  "label": {"ground": 0, "stem": 1, "leaf": 2},
+  "instance":["leaf"]},
+"Pheno4DTomato": {
+  "feature": 3,
+  "label": {"ground": 0, "stem": 1, "leaf": 2},
+  "instance":["leaf"]},
+"Pheno4DAll": {
+  "feature": 3,
+  "label": {"ground": 0, "stem": 1, "leaf": 2},
+  "instance":["stem", "leaf"]},
+"Pheno4DAllRS": {
+  "feature": 3,
+  "label": {"ground": 0, "stem": 1, "leaf": 2},
+  "instance":["stem", "leaf"]},
+"SoyBeanMVS": {
+  "feature": 6,
+  "label": {"mainstem": 0, "stem": 1, "leaf": 2},
+  "instance":["stem", "leaf"]},
+"SoyBeanMVSRS": {
+  "feature": 6,
+  "label": {"mainstem": 0, "stem": 1, "leaf": 2},
+  "instance":["stem", "leaf"]},
+"SYAUMaize": {
+  "feature": 3,
+  "label": {"stem": 0, "leaf": 1},
+  "instance":["leaf"]},
+"COS": {
+  "feature": 3,
+  "label": {"trunk": 0, "branch": 1},
+  "instance":["branch"]},
+"Helios03G4H": {
+  "feature": 3,
+  "label": {"trunk": 0, "branch": 1},
+  "instance":["branch"]},
+"Helios006G4H": {
+  "feature": 3,
+  "label": {"trunk": 0, "branch": 1},
+  "instance":["branch"]},
+"Helios003G4H": {
+  "feature": 3,
+  "label": {"trunk": 0, "branch": 1},
+  "instance":["branch"]}
+}
