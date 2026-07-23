@@ -331,4 +331,6 @@ The following work used PSS:
 }
 ```
 
-*For the 3D plant segmentation community*
+<p align="center">
+  <i>For the 3D plant segmentation community</i>
+</p>
