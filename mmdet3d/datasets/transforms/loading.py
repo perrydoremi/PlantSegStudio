@@ -13,7 +13,7 @@ from mmengine.fileio import get
 from mmdet3d.registry import TRANSFORMS
 from mmdet3d.structures.bbox_3d import get_box_type
 from mmdet3d.structures.points import BasePoints, get_points_type
-
+import pandas as pd
 
 @TRANSFORMS.register_module()
 class LoadMultiViewImageFromFiles(BaseTransform):
@@ -1392,4 +1392,389 @@ class NormalizePointsColor_(NormalizePointsColor):
             points.color = points.color / \
                 points.color.new_tensor(self.color_std)
         input_dict['points'] = points
+        return input_dict
+
+@TRANSFORMS.register_module()
+class LoadPointsFromFileCSV(LoadPointsFromFile):
+    def _load_points(self, pts_filename: str) -> np.ndarray:
+        """Private function to load point clouds data.
+
+        Args:
+            pts_filename (str): Filename of point clouds data.
+
+        Returns:
+            np.ndarray: An array containing point clouds data.
+        """
+        # try:
+        #     pts_bytes = get(pts_filename, backend_args=self.backend_args)
+        #     points = np.frombuffer(pts_bytes, dtype=np.float32)
+        # except ConnectionError:
+        #     mmengine.check_file_exist(pts_filename)
+        #     if pts_filename.endswith('.npy'):
+        #         points = np.load(pts_filename)
+        #     elif pts_filename.endswith('.csv'):
+        #         # Fast CSV loading without pandas
+        #         points = np.loadtxt(pts_filename, delimiter=',', dtype=np.float32, skiprows=1)
+        #     else:
+        #         points = np.fromfile(pts_filename, dtype=np.float32)
+        if pts_filename.endswith('.csv'):
+        #         # Fast CSV loading without pandas
+        #         points = np.loadtxt(pts_filename, delimiter=',', dtype=np.float32, skiprows=1)
+            points = np.loadtxt(pts_filename, delimiter=',', dtype=np.float32, skiprows=1)
+        else:
+            pts_bytes = get(pts_filename, backend_args=self.backend_args)
+            points = np.frombuffer(pts_bytes, dtype=np.float32)
+
+        return points
+
+
+@TRANSFORMS.register_module()
+class LoadAnnotations3D_CSV(LoadAnnotations3D):
+
+
+    def __init__(self, with_sp_mask_3d, pts_semantic_mask_column_name='', pts_instance_mask_column_name='', **kwargs):
+        self.with_sp_mask_3d = with_sp_mask_3d
+        self.pts_semantic_mask_column_name = pts_semantic_mask_column_name
+        self.pts_instance_mask_column_name = pts_instance_mask_column_name
+        super().__init__(**kwargs)
+
+
+    def _load_masks_3d(self, results: dict) -> dict:
+        """Private function to load 3D mask annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded 3D mask annotations.
+        """
+        pts_instance_mask_path = results['pts_instance_mask_path']
+
+        # try:
+        #     mask_bytes = get(
+        #         pts_instance_mask_path, backend_args=self.backend_args)
+        #     pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int64)
+        # except ConnectionError:
+        mmengine.check_file_exist(pts_instance_mask_path)
+        if pts_instance_mask_path.endswith('.csv'):
+                # Fast CSV loading - read without forcing dtype, then convert
+            data = pd.read_csv(pts_instance_mask_path, delimiter=',', usecols=[self.pts_instance_mask_column_name])
+            if data[self.pts_instance_mask_column_name].isna().any():
+                print(f"WARNING: Found NaN values in column '{self.pts_instance_mask_column_name}' at path {pts_instance_mask_path}")
+                print(f"  Total NaN count: {data[self.pts_instance_mask_column_name].isna().sum()}")
+                exit()
+            pts_instance_mask = data[self.pts_instance_mask_column_name].fillna(0).astype(np.int64).values
+        else:
+            mask_bytes = get(
+                pts_instance_mask_path, backend_args=self.backend_args)
+            pts_instance_mask = np.frombuffer(mask_bytes, dtype=np.int64)
+
+        # if self.dataset_type == 'tomatowur':
+        #     pts_instance_mask = pts_instance_mask - 1
+
+        results['pts_instance_mask'] = pts_instance_mask
+        # 'eval_ann_info' will be passed to evaluator
+        if 'eval_ann_info' in results:
+            results['eval_ann_info']['pts_instance_mask'] = pts_instance_mask
+        return results
+
+    def _load_semantic_seg_3d(self, results: dict) -> dict:
+        """Private function to load 3D semantic segmentation annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing the semantic segmentation annotations.
+        """
+        pts_semantic_mask_path = results['pts_semantic_mask_path']
+
+        # try:
+        #     mask_bytes = get(
+        #         pts_semantic_mask_path, backend_args=self.backend_args)
+        #     # add .copy() to fix read-only bug
+        #     pts_semantic_mask = np.frombuffer(
+        #         mask_bytes, dtype=self.seg_3d_dtype).copy()
+        # except ConnectionError:
+        mmengine.check_file_exist(pts_semantic_mask_path)
+
+        if pts_semantic_mask_path.endswith('.csv'):
+            # Fast CSV loading - read without forcing dtype, then convert
+            data = pd.read_csv(pts_semantic_mask_path, delimiter=',', usecols=[self.pts_semantic_mask_column_name])
+            if data[self.pts_semantic_mask_column_name].isna().any():
+                print(f"WARNING: Found NaN values in column '{self.pts_semantic_mask_column_name}' at path {pts_semantic_mask_path}")
+                print(f"  Total NaN count: {data[self.pts_semantic_mask_column_name].isna().sum()}")
+                exit()
+            pts_semantic_mask = data[self.pts_semantic_mask_column_name].astype(np.int64).values
+        else:
+            mask_bytes = get(
+                pts_semantic_mask_path, backend_args=self.backend_args)
+            pts_semantic_mask = np.frombuffer(mask_bytes, dtype=np.int64)
+
+        if self.dataset_type == 'semantickitti':
+            pts_semantic_mask = pts_semantic_mask.astype(np.int64)
+            pts_semantic_mask = pts_semantic_mask % self.seg_offset
+
+        if self.dataset_type.lower() == 'tomatowur':
+            pts_semantic_mask = pts_semantic_mask - 1
+        # nuScenes loads semantic and panoptic labels from different files.
+
+        results['pts_semantic_mask'] = pts_semantic_mask
+
+        # 'eval_ann_info' will be passed to evaluator
+        if 'eval_ann_info' in results:
+            results['eval_ann_info']['pts_semantic_mask'] = pts_semantic_mask
+
+        ### deubing
+        debug=True
+        debug=False
+        if debug:
+            from oneformer3d import visualize_examples
+            points = results["points"].tensor.numpy()
+            attributes = {
+                "pts_semantic_mask": results["pts_semantic_mask"],
+                "pts_instance_mask": results.get("pts_instance_mask", None)
+            }
+            visualize_examples.vis(pc=points[:, :3], colors=points[:, 3:],nodes=points[:,:3], attributes=attributes)
+
+        # unique = np.unique(results.get("pts_instance_mask", None))
+        # assert len(unique) < 1000
+        # for i in unique:
+        #     if i==-1:
+        #         continue
+        #     semantic_instance = pts_semantic_mask[results.get("pts_instance_mask", None) == i]
+        #     semantic_unique = np.unique(semantic_instance)
+        #     if len(semantic_unique) != 1:
+        #         print("check", pts_semantic_mask_path)
+
+        return results
+
+
+    def transform(self, results: dict) -> dict:
+        """Function to load multiple types annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded 3D bounding box, label, mask and
+                semantic segmentation annotations.
+        """
+        results = super().transform(results)
+        if self.with_sp_mask_3d:
+            results = self._load_sp_pts_3d(results)
+        return results
+    
+    def _load_sp_pts_3d(self, results):
+        """Private function to load 3D superpoints mask annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet3d.CustomDataset`.
+
+        Returns:
+            dict: The dict containing loaded 3D mask annotations.
+        """
+        sp_pts_mask_path = results['super_pts_path']
+
+        try:
+            mask_bytes = get(
+                sp_pts_mask_path, backend_args=self.backend_args)
+            # add .copy() to fix read-only bug
+            sp_pts_mask = np.frombuffer(
+                mask_bytes, dtype=np.int64).copy()
+        except ConnectionError:
+            mmengine.check_file_exist(sp_pts_mask_path)
+            sp_pts_mask = np.fromfile(
+                sp_pts_mask_path, dtype=np.int64)
+
+        results['sp_pts_mask'] = sp_pts_mask
+
+        # 'eval_ann_info' will be passed to evaluator
+        if 'eval_ann_info' in results:
+            results['eval_ann_info']['sp_pts_mask'] = sp_pts_mask
+            results['eval_ann_info']['lidar_idx'] = \
+                sp_pts_mask_path.split("/")[-1][:-4]
+            
+        debug=True
+        debug=False
+        if debug:
+            from oneformer3d import visualize_examples
+            points = results["points"].tensor.numpy()
+            attributes = {
+                "pts_semantic_mask": results["pts_semantic_mask"],
+                "pts_instance_mask": results.get("pts_instance_mask", None),
+                "sp_pts_mask": results.get("sp_pts_mask", None)
+            }
+            visualize_examples.vis(pc=points[:, :3], colors=points[:, 3:],nodes=points[:,:3], attributes=attributes)
+
+        return results
+
+
+import torch
+from mmcv.transforms import BaseTransform
+from torch_scatter import scatter_mean
+
+@TRANSFORMS.register_module()
+class CustomAddSuperPointAnnotations(BaseTransform):
+    """Prepare ground truth markup for training.
+    
+    Required Keys:
+    - pts_semantic_mask (np.float32)
+    
+    Added Keys:
+    - gt_sp_masks (np.int64)
+    
+    Args:
+        num_classes (int): Number of classes.
+    """
+    
+    def __init__(self,
+                 num_classes,
+                 stuff_classes,
+                 merge_non_stuff_cls=True):
+        self.num_classes = num_classes
+        self.stuff_classes = stuff_classes
+        self.merge_non_stuff_cls = merge_non_stuff_cls
+ 
+    def transform(self, input_dict):
+        """Private function for preparation ground truth 
+        markup for training.
+        
+        Args:
+            input_dict (dict): Result dict from loading pipeline.
+        
+        Returns:
+            dict: results, 'gt_sp_masks' is added.
+        """
+        # create class mapping
+        # because pts_instance_mask contains instances from non-instaces classes
+        name = input_dict["lidar_points"]["lidar_path"]
+        print(name)
+
+        pts_instance_mask = torch.tensor(input_dict['pts_instance_mask'])
+        pts_semantic_mask = torch.tensor(input_dict['pts_semantic_mask'])
+        
+        pts_instance_mask[pts_semantic_mask == self.num_classes] = -1
+        for stuff_cls in self.stuff_classes:
+            pts_instance_mask[pts_semantic_mask == stuff_cls] = -1
+        
+        idxs = torch.unique(pts_instance_mask)
+        # if idxs[0] != -1:
+        #     print("input_dict:", input_dict)
+        # assert idxs[0] == -1
+
+        mapping = torch.zeros(torch.max(idxs) + 2, dtype=torch.long)
+        new_idxs = torch.arange(len(idxs), device=idxs.device)
+        mapping[idxs] = new_idxs - 1
+        pts_instance_mask = mapping[pts_instance_mask]
+        input_dict['pts_instance_mask'] = pts_instance_mask.numpy()
+
+
+        # create gt instance markup     
+        # insts_mask = pts_instance_mask.clone()
+        
+        # if torch.sum(insts_mask == -1) != 0:
+        #     insts_mask[insts_mask == -1] = torch.max(insts_mask) + 1
+        #     insts_mask = torch.nn.functional.one_hot(insts_mask)[:, :-1]
+        # else:
+        #     insts_mask = torch.nn.functional.one_hot(insts_mask)
+
+        # if insts_mask.shape[1] != 0:
+        #     insts_mask = insts_mask.T
+        #     sp_pts_mask = torch.tensor(input_dict['sp_pts_mask'])
+        #     sp_masks_inst = scatter_mean(
+        #         insts_mask.float(), sp_pts_mask, dim=-1)
+        #     sp_masks_inst = sp_masks_inst > 0.5
+        # else:
+        #     sp_masks_inst = insts_mask.new_zeros(
+        #         (0, input_dict['sp_pts_mask'].max() + 1), dtype=torch.bool)
+
+        num_stuff_cls = len(self.stuff_classes)
+        insts = new_idxs[1:] - 1
+        if self.merge_non_stuff_cls:
+            gt_labels = insts.new_zeros(len(insts) + num_stuff_cls + 1)
+        else:
+            gt_labels = insts.new_zeros(len(insts) + self.num_classes + 1)
+
+        for inst in insts:
+            index = pts_semantic_mask[pts_instance_mask == inst][0]
+            gt_labels[inst] = index - num_stuff_cls
+        
+        input_dict['gt_labels_3d'] = gt_labels.numpy()
+
+        # create gt semantic markup
+        # sem_mask = torch.tensor(input_dict['pts_semantic_mask'])
+        # sem_mask = torch.nn.functional.one_hot(sem_mask, 
+        #                             num_classes=self.num_classes + 1)
+       
+        # sem_mask = sem_mask.T
+        # sp_pts_mask = torch.tensor(input_dict['sp_pts_mask'])
+        # sp_masks_seg = scatter_mean(sem_mask.float(), sp_pts_mask, dim=-1)
+        # sp_masks_seg = sp_masks_seg > 0.5
+
+        # sp_masks_seg[-1, sp_masks_seg.sum(axis=0) == 0] = True
+
+        # assert sp_masks_seg.sum(axis=0).max().item()
+        
+        # if self.merge_non_stuff_cls:
+        #     sp_masks_seg = torch.vstack((
+        #         sp_masks_seg[:num_stuff_cls, :], 
+        #         sp_masks_seg[num_stuff_cls:, :].sum(axis=0).unsqueeze(0)))
+        
+        # sp_masks_all = torch.vstack((sp_masks_inst, sp_masks_seg))
+
+        # input_dict['gt_sp_masks'] = sp_masks_all.numpy()
+
+        # create eval markup
+        if 'eval_ann_info' in input_dict.keys(): 
+            pts_instance_mask[pts_instance_mask != -1] += num_stuff_cls
+            for idx, stuff_cls in enumerate(self.stuff_classes):
+                pts_instance_mask[pts_semantic_mask == stuff_cls] = idx
+
+            input_dict['eval_ann_info']['pts_instance_mask'] = \
+                pts_instance_mask.numpy()
+
+
+@TRANSFORMS.register_module()
+class RemapClassLabels(BaseTransform):
+    """Remap semantic and instance class labels according to a mapping dictionary.
+    
+    This allows merging multiple classes into one, reordering, or collapsing classes.
+    
+    Args:
+        class_mapping (dict): Mapping from original class index to target class index.
+                             Keys = original indices, Values = target indices
+                             Example: {0: 0, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4}
+                             merges pole(1) into main_stem(0)
+    """
+    
+    def __init__(self, class_mapping: dict) -> None:
+        self.class_mapping = class_mapping
+        # Create numpy array for fast vectorized remapping
+        max_idx = max(class_mapping.keys()) if class_mapping else 0
+        self.mapping_array = np.arange(max_idx + 1, dtype=np.int64)
+        for orig, target in class_mapping.items():
+            self.mapping_array[orig] = target
+    
+    def transform(self, results: dict) -> dict:
+        """Remap semantic and instance masks.
+        
+        Args:
+            results (dict): Result dict from pipeline.
+            
+        Returns:
+            dict: Result dict with remapped semantic and instance masks.
+        """
+        # Remap semantic mask
+        if 'pts_semantic_mask' in results:
+            results['pts_semantic_mask'] = self.mapping_array[
+                results['pts_semantic_mask'].astype(np.int64)]
+        
+        # Remap in eval_ann_info if present
+        if 'eval_ann_info' in results and 'pts_semantic_mask' in results['eval_ann_info']:
+            results['eval_ann_info']['pts_semantic_mask'] = self.mapping_array[
+                results['eval_ann_info']['pts_semantic_mask'].astype(np.int64)]
+        
+        return results
+
         return input_dict
