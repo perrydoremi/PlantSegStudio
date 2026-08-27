@@ -5,7 +5,9 @@ from .loading import (LidarDet3DInferencerLoader, LoadAnnotations3D, LoadAnnotat
                       LoadImageFromFileMono3D, LoadMultiViewImageFromFiles, LoadPointsFromDict,
                       LoadPointsFromFile, LoadPointsFromMultiSweeps, MonoDet3DInferencerLoader,
                       MultiModalityDet3DInferencerLoader, NormalizePointsColor,
-                      NormalizePointsColor_, PointSegClassMapping)
+                      NormalizePointsColor_, PointSegClassMapping,
+                      LoadPointsFromFileCSV, LoadAnnotations3D_CSV,
+                      )
 from .test_time_aug import MultiScaleFlipAug3D
 # yapf: disable
 from .transforms_3d import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
