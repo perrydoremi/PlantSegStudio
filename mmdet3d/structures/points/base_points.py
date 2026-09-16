@@ -132,8 +132,8 @@ class BasePoints:
             tensor = tensor.reshape(self.shape[0], 3)
         except (RuntimeError, ValueError):  # for torch.Tensor and np.ndarray
             raise ValueError(f'got unexpected shape {tensor.shape}')
-        if tensor.max() >= 256 or tensor.min() < 0:
-            warnings.warn('point got color value beyond [0, 255]')
+        # if tensor.max() >= 256 or tensor.min() < 0:
+        #     warnings.warn('point got color value beyond [0, 255]')
         if not isinstance(tensor, Tensor):
             tensor = self.tensor.new_tensor(tensor)
         if self.attribute_dims is not None and \

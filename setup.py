@@ -115,7 +115,8 @@ def add_mim_extention():
         if platform.system() == 'Windows':
             mode = 'copy'
         else:
-            mode = 'symlink'
+            # mode = 'symlink'
+            mode = 'copy' ## change to copy due to permission error
     elif 'sdist' in sys.argv or 'bdist_wheel' in sys.argv:
         mode = 'copy'
     else:
@@ -177,11 +178,11 @@ if __name__ == '__main__':
         license='Apache License 2.0',
         install_requires=parse_requirements('requirements/runtime.txt'),
         extras_require={
-            'all': parse_requirements('requirements.txt'),
-            'tests': parse_requirements('requirements/tests.txt'),
-            'build': parse_requirements('requirements/build.txt'),
-            'optional': parse_requirements('requirements/optional.txt'),
-            'mim': parse_requirements('requirements/mminstall.txt'),
+            # 'all': parse_requirements('requirements.txt'),
+            # 'tests': parse_requirements('requirements/tests.txt'),
+            # 'build': parse_requirements('requirements/build.txt'),
+            # 'optional': parse_requirements('requirements/optional.txt'),
+            # 'mim': parse_requirements('requirements/mminstall.txt'),
         },
         ext_modules=[
             make_cuda_ext(

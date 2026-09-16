@@ -129,41 +129,55 @@ def seg_eval(gt_labels, seg_preds, label2cat, ignore_index, logger=None):
     rec = get_rec(sum(hist_list))
     f1 = 2 * pre * rec / (pre + rec)
 
-    header = ['classes']
-    for i in range(len(label2cat)):
-        header.append(label2cat[i])
-    header.extend(['miou', 'acc', 'acc_cls'])
-    for i in range(len(label2cat)):
-        header.extend([
-            f'pre_{label2cat[i]}', f'rec_{label2cat[i]}', f'f1_{label2cat[i]}'
-        ])
-
     ret_dict = dict()
-    table_columns = [['results']]
+    
+    # Build per-class IoU table
+    iou_header = ['class', 'IoU']
+    iou_data = [iou_header]
     for i in range(len(label2cat)):
         ret_dict[label2cat[i]] = float(iou[i])
-        table_columns.append([f'{iou[i]:.4f}'])
+        iou_data.append([label2cat[i], f'{iou[i]:.4f}'])
+    
+    iou_table = AsciiTable(iou_data)
+    iou_table.inner_footing_row_border = True
+    
+    # Build summary metrics table
     ret_dict['miou'] = float(miou)
     ret_dict['acc'] = float(acc)
     ret_dict['acc_cls'] = float(acc_cls)
-
-    table_columns.append([f'{miou:.4f}'])
-    table_columns.append([f'{acc:.4f}'])
-    table_columns.append([f'{acc_cls:.4f}'])
-
+    
+    summary_data = [
+        ['Metric', 'Value'],
+        ['mIoU', f'{miou:.4f}'],
+        ['Accuracy', f'{acc:.4f}'],
+        ['Class Avg Acc', f'{acc_cls:.4f}']
+    ]
+    summary_table = AsciiTable(summary_data)
+    summary_table.inner_footing_row_border = True
+    
+    # Build per-class precision/recall/F1 table
+    prec_header = ['class', 'Precision', 'Recall', 'F1']
+    prec_data = [prec_header]
     for i in range(len(label2cat)):
         ret_dict[f'pre_{label2cat[i]}'] = float(pre[i])
         ret_dict[f'rec_{label2cat[i]}'] = float(rec[i])
         ret_dict[f'f1_{label2cat[i]}'] = float(f1[i])
-        table_columns.append([f'{pre[i]:.4f}'])
-        table_columns.append([f'{rec[i]:.4f}'])
-        table_columns.append([f'{f1[i]:.4f}'])
-
-    table_data = [header]
-    table_rows = list(zip(*table_columns))
-    table_data += table_rows
-    table = AsciiTable(table_data)
-    table.inner_footing_row_border = True
-    print_log('\n' + table.table, logger=logger)
+        prec_data.append([
+            label2cat[i],
+            f'{pre[i]:.4f}',
+            f'{rec[i]:.4f}',
+            f'{f1[i]:.4f}'
+        ])
+    
+    prec_table = AsciiTable(prec_data)
+    prec_table.inner_footing_row_border = True
+    
+    # Print all tables
+    print_log('\n=== IoU per Class ===', logger=logger)
+    print_log('\n' + iou_table.table, logger=logger)
+    print_log('\n=== Summary Metrics ===', logger=logger)
+    print_log('\n' + summary_table.table, logger=logger)
+    print_log('\n=== Precision / Recall / F1 ===', logger=logger)
+    print_log('\n' + prec_table.table, logger=logger)
 
     return ret_dict

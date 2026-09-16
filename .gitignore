@@ -146,3 +146,6 @@ CLAUDE.md
 
 papers/
 data/plant
+
+##
+.devcontainer/*

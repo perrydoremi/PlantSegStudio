@@ -85,7 +85,7 @@ class UnifiedSegMetric(SegMetric):
 
         for eval_ann, single_pred_results in results:
 
-            if self.metric_meta['dataset_name'] in ['S3DIS', 'Plant']:
+            if self.metric_meta['dataset_name'] in ['S3DIS', 'Plant', "TomatoWUR"]:
                 pan_gt = {}
                 pan_gt['pts_semantic_mask'] = eval_ann['pts_semantic_mask']
                 pan_gt['pts_instance_mask'] = \
@@ -110,7 +110,7 @@ class UnifiedSegMetric(SegMetric):
             gt_semantic_masks_sem_task.append(eval_ann['pts_semantic_mask'])
             pred_semantic_masks_sem_task.append(single_pred_results['pts_semantic_mask'][0])
 
-            if self.metric_meta['dataset_name'] in ['S3DIS', 'Plant']:
+            if self.metric_meta['dataset_name'] in ['S3DIS', 'Plant', 'TomatoWUR']:
                 gt_semantic_masks_inst_task.append(eval_ann['pts_semantic_mask'])
                 gt_instance_masks_inst_task.append(eval_ann['pts_instance_mask'])
             else:
@@ -148,6 +148,18 @@ class UnifiedSegMetric(SegMetric):
                 valid_class_ids=self.valid_class_ids,
                 class_labels=classes[:-1],
                 logger=logger)
+        elif self.metric_meta["dataset_name"]== "TomatoWUR":
+            ret_inst = instance_seg_eval(
+                gt_semantic_masks_inst_task,
+                gt_instance_masks_inst_task,
+                pred_instance_masks_inst_task,
+                pred_instance_labels,
+                pred_instance_scores,
+                # valid_class_ids=self.valid_class_ids[num_stuff_cls:-1],
+                # class_labels=classes[num_stuff_cls:-1],
+                valid_class_ids=self.valid_class_ids,
+                class_labels=classes,
+                logger=logger)  
         else:
             # :-1 for unlabeled
             ret_inst = instance_seg_eval(

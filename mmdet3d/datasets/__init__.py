@@ -8,7 +8,8 @@ from .plant_dataset import PlantDataset, PlantInsSegDataset, PlantSegDataset
 # yapf: enable
 from .s3dis_dataset import S3DISDataset, S3DISSegDataset
 from .scannet_dataset import (ScanNetDataset, ScanNetInstanceSegDataset,
-                              ScanNetSegDataset)
+                              ScanNetSegDataset,
+                              TomatoWURDataset)
 from .seg3d_dataset import Seg3DDataset
 from .semantickitti_dataset import SemanticKittiDataset
 from .sunrgbd_dataset import SUNRGBDDataset

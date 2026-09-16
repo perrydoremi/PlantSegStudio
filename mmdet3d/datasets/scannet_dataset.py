@@ -351,3 +351,71 @@ class ScanNetInstanceSegDataset(Seg3DDataset):
             scene_idxs=scene_idxs,
             backend_args=backend_args,
             **kwargs)
+
+@DATASETS.register_module()
+class TomatoWURDataset(ScanNetSegDataset):
+    # "leaves", "main stem", "pole", "side stem"
+    METAINFO = {
+        'classes':
+        ('main stem', 'pole', 'leaves', 'side stem',  "nodes", 'unlabelled'),
+        'palette': [[255, 225, 50], [109, 255, 50], [255, 50, 50], [50, 167, 255], [0,0,0], [255,255,255]],
+        'seg_valid_class_ids':
+        tuple([0,1,2,3,4,5]),
+        'seg_all_class_ids':
+        tuple(tuple(range(0, 255)))  # possibly with 'stair' class
+    }
+    def get_scene_idxs(self, *args, **kwargs):
+        """Compute scene_idxs for data sampling."""
+        return np.arange(len(self)).astype(np.int32)
+
+
+    def parse_data_info(self, info: dict) -> dict:
+        """Process the raw data info.
+
+        Args:
+            info (dict): Raw info dict.
+
+        Returns:
+            dict: Has `ann_info` in training stage. And
+            all path has been converted to absolute path.
+        """
+        # info['super_pts_path'] = osp.join(
+        #     self.data_prefix.get('sp_pts_mask', ''), info['super_pts_path'])
+
+        info = super().parse_data_info(info)
+
+        return info
+    #     color_mapping = { 
+    #     "Leaf": {
+    #         "rgb_encoding": [
+    #             255,
+    #             50,
+    #             50
+    #         ],
+    #         "class_id": 0
+    #     },
+    #     "Main stem": {
+    #         "rgb_encoding": [
+    #             255,
+    #             225,
+    #             50
+    #         ],
+    #         "class_id": 1
+    #     },
+    #     "Pole": {
+    #         "rgb_encoding": [
+    #             109,
+    #             255,
+    #             50
+    #         ],
+    #         "class_id": 2
+    #     },
+    #     "Side Stem": {
+    #         "rgb_encoding": [
+    #             50,
+    #             167,
+    #             255
+    #         ],
+    #         "class_id": 3
+    #     }
+    # }

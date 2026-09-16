@@ -7,7 +7,7 @@ dataset = 'Plant'
 dataset_type = 'PlantInsSegDataset'
 plant_type = 'COS'
 class_names = ['trunk', 'branch', 'unlabeled']
-data_root = f'data/plant/{plant_type}'
+data_root = f'./data/plant/{plant_type}'
 data_prefix = dict(
     pts='points', pts_instance_mask='instance_mask', pts_semantic_mask='semantic_mask')
 
