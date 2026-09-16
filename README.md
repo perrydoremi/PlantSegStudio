@@ -4,6 +4,8 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-orange.svg)](https://pytorch.org/)
 [![CUDA](https://img.shields.io/badge/CUDA-11.7-green.svg)](https://developer.nvidia.com/cuda-11-7-0-download-archive)
 
+> 📢 This work has been published in [ISPRS Journal of Photogrammetry and Remote Sensing](https://doi.org/10.1016/j.isprsjprs.2026.09.003).
+
 ## Overview
 
 Plant Segmentation Studio (PSS) is a unified framework built on [mmdet3d](https://github.com/open-mmlab/mmdetection3d) for training 3D point cloud segmentation models for plant data. 
@@ -291,15 +293,14 @@ This work builds upon:
 If you use PSS in your research, please cite:
 
 ```bibtex
-@misc{du2025scalableorganlevel3d,
-    title={Towards Scalable Organ-Level 3D Plant Segmentation: 
-           Bridging the Data-Algorithm-Computing Gap}, 
-    author={Ruiming Du and Guangxun Zhai and Tian Qiu and Yu Jiang},
-    year={2025},
-    eprint={2509.06329},
-    archivePrefix={arXiv},
-    primaryClass={cs.CV},
-    url={https://arxiv.org/abs/2509.06329}
+@article{du2026pss,
+  author  = {Ruiming Du and Guangxun Zhai and Tian Qiu and Shichao Jin and Dawei Li and Zhihong Ma and Yongliang Qiao and Junfeng Gao and Haiyan Cen and Yu Jiang},
+  title   = {Toward scalable organ-level 3D plant segmentation: A systematic and quantitative review through the lens of the data-algorithm-computing triangle},
+  journal = {ISPRS Journal of Photogrammetry and Remote Sensing},
+  volume  = {242},
+  pages   = {419-454},
+  year    = {2026},
+  doi     = {10.1016/j.isprsjprs.2026.09.003}
 }
 ```
 
